@@ -11,6 +11,13 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Documentation and helper files
+*.md
+*.txt
+*.bat
+*.env.example
+docs/
+
 # IDE
 .vscode/
 .idea/
