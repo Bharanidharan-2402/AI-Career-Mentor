@@ -1,0 +1,39 @@
+version: '3.9'
+services:
+  mongo:
+    image: mongo:7.0
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - '27017:27017'
+
+  server:
+    build: .
+    ports:
+      - '5000:5000'
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/mentor-agent
+      - JWT_SECRET=supersecretjwtkey
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CLIENT_URL=http://localhost:5173
+    depends_on:
+      - mongo
+    volumes:
+      - .:/usr/src/app
+
+  client:
+    image: node:20-alpine
+    working_dir: /usr/src/app/client
+    volumes:
+      - ./client:/usr/src/app/client
+    ports:
+      - '5173:5173'
+    command: ["npm", "run", "dev"]
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
