@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.js --watch src --ext js,json",
     "start": "node src/index.js",
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "lint": "eslint src --ext .js",
     "seed": "node src/utils/seed.js"
   },

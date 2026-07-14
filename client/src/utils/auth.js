@@ -8,4 +8,10 @@ export const getUserProfile = () => {
 };
 
 export const setUserProfile = (user) => window.localStorage.setItem('mentor_user', JSON.stringify(user));
+export const updateStoredUserProfile = (updates) => {
+  const currentProfile = getUserProfile() || {};
+  const nextProfile = { ...currentProfile, ...updates };
+  setUserProfile(nextProfile);
+  return nextProfile;
+};
 export const removeUserProfile = () => window.localStorage.removeItem('mentor_user');

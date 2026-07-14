@@ -1,6 +1,6 @@
-import { Outlet, NavLink } from 'react-router-dom';
-import { useState } from 'react';
-import { removeToken, removeUserProfile } from '../utils/auth.js';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { removeToken, removeUserProfile, getToken } from '../utils/auth.js';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard' },
@@ -15,12 +15,23 @@ const navItems = [
 
 function Layout() {
   const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!getToken()) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleLogout = () => {
     removeToken();
     removeUserProfile();
-    window.location.href = '/login';
+    navigate('/login');
   };
+
+  if (!getToken()) {
+    return null;
+  }
 
   return (
     <div className='min-h-screen bg-slate-50 text-slate-900'>

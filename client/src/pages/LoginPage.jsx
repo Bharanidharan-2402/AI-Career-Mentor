@@ -3,6 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/apiClient.js';
 import { setToken, setUserProfile } from '../utils/auth.js';
 
+const handleGoogleSignIn = () => {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const redirectUri = `${window.location.origin}/auth/google/callback`;
+  const scope = 'openid email profile';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId || '')}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+  window.location.href = authUrl;
+};
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const { register, handleSubmit } = useForm();
@@ -10,12 +18,14 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     try {
       const response = await api.post('/auth/login', data);
-      setToken(response.data.data.token);
-      setUserProfile(response.data.data.user);
+      const { token, user } = response.data.data;
+      setToken(token);
+      setUserProfile(user);
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
-      alert('Login failed. Check credentials.');
+      const message = error.response?.data?.error?.message || 'Login failed. Check credentials.';
+      alert(message);
     }
   };
 
@@ -33,6 +43,9 @@ const LoginPage = () => {
         </label>
         <button type='submit' className='w-full rounded-2xl bg-brand px-4 py-3 text-white'>Sign in</button>
       </form>
+      <div className='mt-4'>
+        <button type='button' onClick={handleGoogleSignIn} className='w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-700'>Continue with Google</button>
+      </div>
       <p className='mt-6 text-center text-slate-500'>New here? <Link to='/register' className='text-brand font-semibold'>Create account</Link></p>
     </div>
   );

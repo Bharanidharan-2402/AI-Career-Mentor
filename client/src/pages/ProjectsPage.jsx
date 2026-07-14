@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../api/apiClient.js';
+import { getUserProfile } from '../utils/auth.js';
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
-  const { register, handleSubmit } = useForm({ defaultValues: { skillLevel: 'Intermediate' } });
+  const user = getUserProfile();
+  const { register, handleSubmit } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer', skillLevel: 'Intermediate' } });
 
-  const onSubmit = async (data) => {
+  const loadProjects = async (data) => {
     try {
       const response = await api.post('/projects/recommend', data);
       setProjects(response.data.data.recommendations);
@@ -14,6 +16,16 @@ const ProjectsPage = () => {
       console.error(error);
       alert('Could not load project recommendations.');
     }
+  };
+
+  useEffect(() => {
+    if (user?.aiProfile?.skills?.length || user?.aiProfile?.summary) {
+      loadProjects({ targetRole: user.careerGoal || 'Software Engineer', skillLevel: 'Intermediate' });
+    }
+  }, [user]);
+
+  const onSubmit = async (data) => {
+    await loadProjects(data);
   };
 
   return (

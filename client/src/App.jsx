@@ -14,14 +14,17 @@ import ProfilePage from './pages/ProfilePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+import GoogleCallbackPage from './pages/GoogleCallbackPage.jsx';
 
 function App() {
   return (
     <Routes>
+      <Route index element={<LandingPage />} />
+      <Route path='login' element={<LoginPage />} />
+      <Route path='register' element={<RegisterPage />} />
+      <Route path='auth/google/callback' element={<GoogleCallbackPage />} />
+
       <Route path='/' element={<Layout />}>
-        <Route index element={<LandingPage />} />
-        <Route path='login' element={<LoginPage />} />
-        <Route path='register' element={<RegisterPage />} />
         <Route path='dashboard' element={<DashboardPage />} />
         <Route path='upload-resume' element={<UploadResumePage />} />
         <Route path='skills' element={<SkillAnalysisPage />} />
@@ -32,8 +35,9 @@ function App() {
         <Route path='profile' element={<ProfilePage />} />
         <Route path='settings' element={<SettingsPage />} />
         <Route path='chat' element={<ChatPage />} />
-        <Route path='*' element={<NotFoundPage />} />
       </Route>
+
+      <Route path='*' element={<NotFoundPage />} />
     </Routes>
   );
 }

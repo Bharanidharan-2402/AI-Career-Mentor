@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../api/apiClient.js';
+import { getUserProfile } from '../utils/auth.js';
 
 const InterviewPage = () => {
   const [questions, setQuestions] = useState([]);
-  const { register, handleSubmit } = useForm({ defaultValues: { interviewType: 'Technical' } });
+  const user = getUserProfile();
+  const { register, handleSubmit } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer', interviewType: 'Technical' } });
 
-  const onSubmit = async (data) => {
+  const loadQuestions = async (data) => {
     try {
       const response = await api.post('/interview/questions', data);
       setQuestions(response.data.data.interviewPackage.questions || []);
@@ -14,6 +16,16 @@ const InterviewPage = () => {
       console.error(error);
       alert('Interview generation failed.');
     }
+  };
+
+  useEffect(() => {
+    if (user?.aiProfile?.skills?.length || user?.aiProfile?.summary) {
+      loadQuestions({ targetRole: user.careerGoal || 'Software Engineer', interviewType: 'Technical' });
+    }
+  }, [user]);
+
+  const onSubmit = async (data) => {
+    await loadQuestions(data);
   };
 
   return (

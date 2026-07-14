@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api/apiClient.js';
+import { updateStoredUserProfile } from '../utils/auth.js';
 
 const UploadResumePage = () => {
   const [file, setFile] = useState(null);
@@ -15,11 +16,14 @@ const UploadResumePage = () => {
     formData.append('resume', file);
 
     try {
-      await api.post('/resume/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setMessage('Resume uploaded successfully. Ready to analyze!');
+      const response = await api.post('/resume/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const analysis = response.data.data.analysis || {};
+      updateStoredUserProfile({ aiProfile: analysis, resumeUploadedAt: new Date().toISOString() });
+      setMessage(`Resume uploaded and analyzed successfully. Your skill profile is ready for roadmap, project, and interview guidance.`);
     } catch (error) {
       console.error(error);
-      setMessage('Upload failed. Please ensure the file is a PDF under 5MB.');
+      const serverMessage = error?.response?.data?.error?.message;
+      setMessage(serverMessage || 'Upload failed. Please ensure the file is a PDF under 5MB.');
     }
   };
 

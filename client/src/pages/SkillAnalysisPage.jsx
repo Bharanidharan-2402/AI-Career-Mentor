@@ -1,19 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../api/apiClient.js';
+import { getUserProfile } from '../utils/auth.js';
 
 const SkillAnalysisPage = () => {
   const [result, setResult] = useState(null);
-  const { register, handleSubmit } = useForm();
+  const [message, setMessage] = useState('');
+  const user = getUserProfile();
+  const { register, handleSubmit } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer' } });
 
-  const onSubmit = async (data) => {
+  const loadSkillGap = async (targetRole) => {
     try {
-      const response = await api.post('/skills/gap', { targetRole: data.targetRole });
+      const response = await api.post('/skills/gap', { targetRole });
       setResult(response.data.data.gapResult);
+      setMessage('Skill gaps were generated from your uploaded resume profile.');
     } catch (error) {
       console.error(error);
-      alert('Skill gap analysis failed.');
+      setMessage('Skill gap analysis failed.');
     }
+  };
+
+  useEffect(() => {
+    if (user?.aiProfile?.skills?.length || user?.aiProfile?.summary) {
+      loadSkillGap(user.careerGoal || 'Software Engineer');
+    }
+  }, [user]);
+
+  const onSubmit = async (data) => {
+    await loadSkillGap(data.targetRole);
   };
 
   return (
@@ -40,6 +54,7 @@ const SkillAnalysisPage = () => {
           <button className='self-end rounded-2xl bg-brand px-5 py-3 text-white'>Analyze Skills</button>
         </form>
       </div>
+      {message && <p className='text-sm text-slate-600'>{message}</p>}
       {result && (
         <div className='rounded-3xl bg-white p-8 shadow-xl'>
           <h3 className='text-xl font-semibold text-slate-900'>Gap Summary</h3>

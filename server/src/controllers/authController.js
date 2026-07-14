@@ -2,9 +2,15 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { registerSchema, loginSchema } from '../utils/validators.js';
+import { exchangeGoogleCode } from '../utils/oauth.js';
 
 const createToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET is required');
+  }
+
+  return jwt.sign({ id: user._id }, jwtSecret, {
     expiresIn: '7d'
   });
 };
@@ -45,4 +51,42 @@ export const login = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { code, redirectUri } = req.body;
+    if (!code || !redirectUri) {
+      return res.status(400).json({ success: false, error: { message: 'Google authorization code and redirect URI are required' } });
+    }
+
+    const googleUser = await exchangeGoogleCode({ code, redirectUri });
+    const email = googleUser.email?.toLowerCase();
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name: googleUser.name || googleUser.email?.split('@')[0] || 'Google User',
+        email,
+        password: await bcrypt.hash(`${Date.now()}-${Math.random()}`, 12),
+        careerGoal: 'Software Engineer',
+        authProvider: 'google'
+      });
+    }
+
+    const token = createToken(user);
+    res.json({
+      success: true,
+      data: {
+        user: { id: user._id, name: user.name, email: user.email, careerGoal: user.careerGoal },
+        token
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const me = async (req, res) => {
+  res.json({ success: true, data: { user: req.user } });
 };

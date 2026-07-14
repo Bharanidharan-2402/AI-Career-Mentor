@@ -7,6 +7,7 @@ const DashboardPage = () => {
   const [progress, setProgress] = useState(null);
   const [overview, setOverview] = useState({ score: 0, gaps: 0, projects: 0 });
   const user = getUserProfile();
+  const aiProfile = user?.aiProfile || {};
 
   useEffect(() => {
     const load = async () => {
@@ -20,13 +21,22 @@ const DashboardPage = () => {
     load();
   }, []);
 
-  const skillData = [
-    { subject: 'Frontend', A: 70 },
-    { subject: 'Backend', A: 65 },
-    { subject: 'AI/ML', A: 50 },
-    { subject: 'Cloud', A: 55 },
-    { subject: 'Data', A: 60 }
-  ];
+  useEffect(() => {
+    if (!aiProfile || Object.keys(aiProfile).length === 0) {
+      return;
+    }
+
+    setOverview({
+      score: Math.min(100, 70 + (aiProfile.skills?.length || 0) * 2),
+      gaps: Math.max(1, (aiProfile.skills?.length || 0) > 0 ? 3 : 1),
+      projects: aiProfile.projects?.length || 0
+    });
+  }, [aiProfile]);
+
+  const skillData = (aiProfile.skills || []).slice(0, 5).map((skill, index) => ({
+    subject: skill,
+    A: Math.min(100, 60 + index * 8)
+  }));
 
   const roadmapData = [
     { name: 'Week 1', progress: 20 },
@@ -48,8 +58,8 @@ const DashboardPage = () => {
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='rounded-3xl bg-gradient-to-br from-brand to-indigo-700 p-6 text-white shadow-xl'>
           <p className='text-sm uppercase tracking-[0.2em]'>Resume Score</p>
-          <p className='mt-4 text-4xl font-semibold'>82</p>
-          <p className='mt-3 text-slate-200'>ATS-friendly suggestions are waiting on your resume page.</p>
+          <p className='mt-4 text-4xl font-semibold'>{overview.score}</p>
+          <p className='mt-3 text-slate-200'>Based on your latest resume analysis and profile insights.</p>
         </div>
         <div className='rounded-3xl bg-white p-6 shadow'>
           <p className='text-sm uppercase tracking-[0.2em] text-slate-500'>Completed Tasks</p>
@@ -66,18 +76,22 @@ const DashboardPage = () => {
         <div className='rounded-3xl bg-white p-6 shadow'>
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold text-slate-900'>Skill Radar</h3>
-            <span className='text-sm text-slate-500'>Live snapshot</span>
+            <span className='text-sm text-slate-500'>Resume-backed snapshot</span>
           </div>
-          <div className='mt-6 h-96'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <RadarChart data={skillData} outerRadius='80%'>
-                <PolarGrid />
-                <PolarAngleAxis dataKey='subject' />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                <Radar name='Skills' dataKey='A' stroke='#4f46e5' fill='#6366f1' fillOpacity={0.6} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+          {skillData.length > 0 ? (
+            <div className='mt-6 h-96'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <RadarChart data={skillData} outerRadius='80%'>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey='subject' />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                  <Radar name='Skills' dataKey='A' stroke='#4f46e5' fill='#6366f1' fillOpacity={0.6} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className='mt-8 text-sm text-slate-600'>Upload a resume to populate this snapshot with AI-detected skills.</p>
+          )}
         </div>
         <div className='rounded-3xl bg-white p-6 shadow'>
           <div className='flex items-center justify-between'>

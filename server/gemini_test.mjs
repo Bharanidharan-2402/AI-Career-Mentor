@@ -1,0 +1,11 @@
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
+const apiKey = process.env.GEMINI_API_KEY;
+console.log('Loaded key:', !!apiKey);
+const ai = new GoogleGenerativeAI(apiKey);
+const model = ai.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' });
+const result = await model.generateContent('Give a one-sentence confirmation that the Gemini API key is active.');
+console.log('response object keys:', Object.keys(result));
+console.log('response text:', typeof result.text === 'function' ? result.text() : result);

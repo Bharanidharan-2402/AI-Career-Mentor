@@ -1,5 +1,22 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import logger from './logger.js';
+
+const configureDns = () => {
+  const servers = process.env.DNS_SERVERS
+    ?.split(',')
+    .map((server) => server.trim())
+    .filter(Boolean) || ['8.8.8.8', '8.8.4.4'];
+
+  try {
+    dns.setServers(servers);
+    logger.info(`DNS servers configured: ${servers.join(', ')}`);
+  } catch (error) {
+    logger.warn('Unable to configure custom DNS servers', { error: error.message });
+  }
+};
+
+configureDns();
 
 const connectDB = async () => {
   const uri = process.env.MONGO_URI;
@@ -9,16 +26,14 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 5000
     });
 
     logger.info('MongoDB connected successfully');
   } catch (error) {
-    logger.warn('MongoDB connection failed', { error: error.message });
-    logger.warn('Running in offline mode. Database operations will not work.');
+    logger.error('MongoDB connection failed', { error: error.message });
+    throw error;
   }
 };
 

@@ -10,6 +10,9 @@ RUN npm install
 
 COPY . .
 
+WORKDIR /usr/src/app/client
+RUN npm run build
+
 WORKDIR /usr/src/app/server
 RUN npm install --production
 

@@ -1,0 +1,10 @@
+import dotenv from "dotenv";
+dotenv.config({ path: './server/.env' });
+const key = process.env.GEMINI_API_KEY;
+if (!key) throw new Error('Missing GEMINI_API_KEY');
+const url = `https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(key)}`;
+console.log('Fetching', url);
+const resp = await fetch(url, { method: 'GET' });
+console.log('status', resp.status, resp.statusText);
+const json = await resp.json();
+console.log(JSON.stringify(json, null, 2));
