@@ -27,7 +27,7 @@ export const register = async (req, res, next) => {
     const user = await User.create({ name, email, password: hashedPassword, careerGoal });
     const token = createToken(user);
 
-    res.status(201).json({ success: true, data: { user: { id: user._id, name: user.name, email: user.email, careerGoal }, token } });
+    res.status(201).json({ success: true, data: { user: { id: user._id, name: user.name, email: user.email, careerGoal, aiProfile: user.aiProfile || {}, resumeUploadedAt: user.resumeUploadedAt }, token } });
   } catch (error) {
     next(error);
   }
@@ -47,7 +47,7 @@ export const login = async (req, res, next) => {
     }
 
     const token = createToken(user);
-    res.json({ success: true, data: { user: { id: user._id, name: user.name, email: user.email, careerGoal: user.careerGoal }, token } });
+    res.json({ success: true, data: { user: { id: user._id, name: user.name, email: user.email, careerGoal: user.careerGoal, aiProfile: user.aiProfile || {}, resumeUploadedAt: user.resumeUploadedAt }, token } });
   } catch (error) {
     next(error);
   }
@@ -78,7 +78,7 @@ export const googleAuth = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        user: { id: user._id, name: user.name, email: user.email, careerGoal: user.careerGoal },
+        user: { id: user._id, name: user.name, email: user.email, careerGoal: user.careerGoal, aiProfile: user.aiProfile || {}, resumeUploadedAt: user.resumeUploadedAt },
         token
       }
     });
@@ -88,5 +88,6 @@ export const googleAuth = async (req, res, next) => {
 };
 
 export const me = async (req, res) => {
-  res.json({ success: true, data: { user: req.user } });
+  const user = req.user || {};
+  res.json({ success: true, data: { user: { ...user, aiProfile: user.aiProfile || {}, resumeUploadedAt: user.resumeUploadedAt } } });
 };

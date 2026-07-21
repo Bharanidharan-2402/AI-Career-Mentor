@@ -10,7 +10,14 @@ export const getUserProfile = () => {
 export const setUserProfile = (user) => window.localStorage.setItem('mentor_user', JSON.stringify(user));
 export const updateStoredUserProfile = (updates) => {
   const currentProfile = getUserProfile() || {};
-  const nextProfile = { ...currentProfile, ...updates };
+  const nextProfile = {
+    ...currentProfile,
+    ...updates,
+    aiProfile: {
+      ...(currentProfile.aiProfile || {}),
+      ...(updates.aiProfile || {})
+    }
+  };
   setUserProfile(nextProfile);
   return nextProfile;
 };

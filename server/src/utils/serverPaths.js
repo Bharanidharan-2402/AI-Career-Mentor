@@ -12,8 +12,8 @@ export const resolveStoredUploadPath = (storedPath) => {
   }
 
   const normalized = storedPath.replace(/\\/g, '/');
-  if (path.isAbsolute(normalized) || normalized.startsWith('file://')) {
-    return normalized;
+  if (path.isAbsolute(storedPath) || path.isAbsolute(normalized) || storedPath.startsWith('file://')) {
+    return storedPath;
   }
 
   if (normalized.startsWith('server/')) {

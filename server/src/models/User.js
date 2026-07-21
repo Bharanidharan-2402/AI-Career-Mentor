@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   careerGoal: { type: String, default: 'Software Engineer' },
   authProvider: { type: String, default: 'local' },
   resumeUploadedAt: { type: Date },
+  photoUrl: { type: String },
   createdAt: { type: Date, default: Date.now },
   aiProfile: { type: mongoose.Schema.Types.Mixed, default: {} }
 });

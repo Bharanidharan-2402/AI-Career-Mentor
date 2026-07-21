@@ -23,7 +23,7 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (!isResumeFileAccepted(file)) {
-      cb(new Error('Only PDF resumes are accepted'));
+      cb(new Error('Only PDF, PNG, JPG, JPEG, and DOCX resumes are accepted'));
     } else {
       cb(null, true);
     }

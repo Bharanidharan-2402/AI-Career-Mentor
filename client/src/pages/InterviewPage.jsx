@@ -1,28 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../api/apiClient.js';
 import { getUserProfile } from '../utils/auth.js';
 
 const InterviewPage = () => {
   const [questions, setQuestions] = useState([]);
-  const user = getUserProfile();
-  const { register, handleSubmit } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer', interviewType: 'Technical' } });
+  const [user, setUser] = useState(() => getUserProfile());
+  const [loading, setLoading] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
+  const didAutoLoad = useRef(false);
+  const { register, handleSubmit, reset } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer', interviewType: 'Technical' } });
+
+  useEffect(() => {
+    const storedUser = getUserProfile();
+    if (storedUser) {
+      setUser(storedUser);
+      reset({ targetRole: storedUser?.careerGoal || 'Software Engineer', interviewType: 'Technical' });
+    }
+  }, [reset]);
 
   const loadQuestions = async (data) => {
+    setLoading(true);
     try {
       const response = await api.post('/interview/questions', data);
       setQuestions(response.data.data.interviewPackage.questions || []);
     } catch (error) {
       console.error(error);
       alert('Interview generation failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (didAutoLoad.current) return;
     if (user?.aiProfile?.skills?.length || user?.aiProfile?.summary) {
+      didAutoLoad.current = true;
       loadQuestions({ targetRole: user.careerGoal || 'Software Engineer', interviewType: 'Technical' });
     }
-  }, [user]);
+  }, [user?.aiProfile?.skills?.length, user?.aiProfile?.summary, user?.careerGoal]);
 
   const onSubmit = async (data) => {
     await loadQuestions(data);
@@ -61,8 +77,13 @@ const InterviewPage = () => {
           <button className='self-end rounded-2xl bg-brand px-5 py-3 text-white'>Generate Interview</button>
         </form>
       </div>
-      {questions.length > 0 && (
+      {(questions.length > 0 || loading) && (
         <div className='space-y-5'>
+          {loading && questions.length === 0 && (
+            <div className='rounded-3xl bg-white p-6 shadow'>
+              <p className='text-slate-500'>Generating interview questions…</p>
+            </div>
+          )}
           {questions.map((item, index) => (
             <div key={index} className='rounded-3xl bg-white p-6 shadow'>
               <p className='text-sm uppercase tracking-[0.16em] text-slate-500'>{item.category}</p>

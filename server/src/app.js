@@ -15,6 +15,7 @@ import projectsRoutes from './routes/projects.js';
 import interviewRoutes from './routes/interview.js';
 import chatRoutes from './routes/chat.js';
 import progressRoutes from './routes/progress.js';
+import profileRoutes from './routes/profile.js';
 
 const app = express();
 
@@ -49,6 +50,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientBuildPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
 
+// serve uploaded files publicly
+import { serverRoot } from './utils/serverPaths.js';
+app.use('/uploads', express.static(path.resolve(serverRoot, 'uploads')));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/resume-score', resumeScoreRoutes);
@@ -58,6 +63,7 @@ app.use('/api/projects', projectsRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/profile', profileRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'AI Student Career Mentor Agent' });
