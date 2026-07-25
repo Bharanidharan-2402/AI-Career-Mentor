@@ -35,7 +35,14 @@ export const projectSchema = z.object({
 
 export const interviewSchema = z.object({
   targetRole: z.string().min(3),
-  interviewType: z.string().min(3)
+  interviewType: z.enum(['Technical', 'HR', 'Coding', 'System Design']),
+  questionCount: z.number().int().min(1).max(20).optional()
+});
+
+export const interviewDetailSchema = z.object({
+  targetRole: z.string().min(3),
+  interviewType: z.enum(['Technical', 'HR', 'Coding', 'System Design']),
+  question: z.string().min(1)
 });
 
 export const resumeScoreSchema = z.object({

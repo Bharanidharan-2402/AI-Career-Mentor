@@ -23,24 +23,53 @@ const tryParseJson = (raw) => {
   }
 };
 
-const interviewAgent = async (profile, targetRole) => {
+const normalizeType = (value) => {
+  if (!value) return '';
+  return String(value).trim().toLowerCase();
+};
+
+const buildQuestion = (item, index, interviewType) => ({
+  category: interviewType,
+  question: item.question || item.prompt || `Question ${index + 1} for ${interviewType} interview in ${item.role || 'the target role'}.`,
+  difficulty: item.difficulty || item.level || 'Medium',
+  idealAnswer: item.idealAnswer || item.answer || item.response || '',
+  hint: item.hint || item.tip || ''
+});
+
+const interviewAgent = async (profile, targetRole, interviewType, questionCount = 5) => {
   const prompt = await loadPrompt('interview.txt');
-  const aiRaw = await generateAIResponse(prompt, { profile, targetRole });
+  const aiRaw = await generateAIResponse(prompt, { profile, targetRole, interviewType, questionCount });
 
   const parsed = tryParseJson(aiRaw);
-  if (parsed && typeof parsed === 'object') return parsed;
+  if (parsed && typeof parsed === 'object') {
+    const requestedType = normalizeType(interviewType);
+    const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const fixedQuestions = rawQuestions
+      .map((item, index) => buildQuestion(item, index, interviewType))
+      .slice(0, questionCount);
 
-  // Fallback: try to extract question/answer pairs heuristically from aiRaw
-  // If everything fails, return a sensible default question for the target role
+    const categoryMatch = fixedQuestions.every((q) => normalizeType(q.category) === requestedType);
+    if (fixedQuestions.length >= questionCount && categoryMatch) {
+      return {
+        role: targetRole,
+        interviewType,
+        questions: fixedQuestions
+      };
+    }
+  }
+
+  const questions = Array.from({ length: questionCount }, (_, index) => ({
+    category: interviewType,
+    question: `Practice question ${index + 1} for ${interviewType} interview in ${targetRole}.`,
+    difficulty: 'Medium',
+    idealAnswer: `Provide a strong, structured answer tailored to ${interviewType.toLowerCase()} topics for ${targetRole}.`,
+    hint: `Keep your response focused on ${interviewType.toLowerCase()} concepts relevant to ${targetRole}.`
+  }));
+
   return {
-    questions: [
-      {
-        category: 'Technical',
-        question: `Explain a core ${targetRole} concept clearly.`,
-        idealAnswer: 'Provide a concise, structured explanation with an example.',
-        hint: 'Focus on problem, approach, and result.'
-      }
-    ]
+    role: targetRole,
+    interviewType,
+    questions
   };
 };
 

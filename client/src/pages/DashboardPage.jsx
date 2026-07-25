@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import api from '../api/apiClient.js';
 import { getUserProfile } from '../utils/auth.js';
+import { AuthContext } from '../contexts/AuthContext.jsx';
+import { useResume } from '../contexts/ResumeContext.jsx';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 const DashboardPage = () => {
   const [progress, setProgress] = useState(null);
   const [overview, setOverview] = useState({ score: 0, gaps: 0, projects: 0 });
-  const user = getUserProfile();
-  const aiProfile = user?.aiProfile || {};
+  const { user: authUser } = useContext(AuthContext);
+  const { aiProfile } = useResume();
+  const user = authUser || getUserProfile();
 
   useEffect(() => {
     const load = async () => {
@@ -22,10 +25,7 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!aiProfile || Object.keys(aiProfile).length === 0) {
-      return;
-    }
-
+    if (!aiProfile || Object.keys(aiProfile).length === 0) return;
     setOverview({
       score: Math.min(100, 70 + (aiProfile.skills?.length || 0) * 2),
       gaps: Math.max(1, (aiProfile.skills?.length || 0) > 0 ? 3 : 1),
@@ -33,8 +33,8 @@ const DashboardPage = () => {
     });
   }, [aiProfile]);
 
-  const skillData = (aiProfile.skills || []).slice(0, 5).map((skill, index) => ({
-    subject: skill,
+  const skillData = (aiProfile?.skills || []).slice(0, 5).map((skill, index) => ({
+    subject: typeof skill === 'string' ? skill : skill?.name || `Skill ${index + 1}`,
     A: Math.min(100, 60 + index * 8)
   }));
 
@@ -54,6 +54,13 @@ const DashboardPage = () => {
             <p className='mt-2 text-slate-600'>Your AI Mentor dashboard gives career progress, skills, and tasks in one place.</p>
           </div>
         </div>
+        {aiProfile?.skills?.length > 0 && (
+          <div className='mt-4 rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3'>
+            <p className='text-sm text-indigo-700'>
+              ✅ Resume analyzed — <strong>{aiProfile.skills.length}</strong> skills detected. All modules personalized.
+            </p>
+          </div>
+        )}
       </div>
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='rounded-3xl bg-gradient-to-br from-brand to-indigo-700 p-6 text-white shadow-xl'>
@@ -100,7 +107,7 @@ const DashboardPage = () => {
           </div>
           <div className='mt-6 h-96'>
             <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={roadmapData}> 
+              <BarChart data={roadmapData}>
                 <XAxis dataKey='name' stroke='#334155' />
                 <YAxis stroke='#334155' />
                 <Tooltip />

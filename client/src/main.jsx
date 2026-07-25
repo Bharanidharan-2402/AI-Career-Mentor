@@ -4,10 +4,17 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './index.css';
 
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import { ResumeProvider } from './contexts/ResumeContext.jsx';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <AuthProvider>
+      <ResumeProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <App />
+        </BrowserRouter>
+      </ResumeProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

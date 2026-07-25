@@ -1,7 +1,8 @@
-import { getUserProfile } from '../utils/auth.js';
+import { getUserProfile, setUserProfile, updateStoredUserProfile } from '../utils/auth.js';
 import api from '../api/apiClient.js';
-import { updateStoredUserProfile } from '../utils/auth.js';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext.jsx';
+import { useResume } from '../contexts/ResumeContext.jsx';
 
 const normalize = (val) => {
   if (!val) return val;
@@ -89,11 +90,37 @@ const renderSkills = (skills = []) => (
 );
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(() => getUserProfile());
-  const profile = user?.aiProfile || {};
-  const [selectedFileName, setSelectedFileName] = useState(null);
+  const { user: authUser, updateUser } = useContext(AuthContext);
+  const { aiProfile: liveAiProfile } = useResume();
+  const [user, setUser] = useState(() => authUser || getUserProfile());
+  const [selectedFileName, setSelectedFileName] = useState('');
+  const [photoStatus, setPhotoStatus] = useState('idle');
+  const [photoError, setPhotoError] = useState(false);
   const fileInputRef = useRef(null);
-  const contact = profile.contact || {};
+
+  // Merge: live context takes priority over local state
+  const mergedUser = { ...(user || {}), ...(authUser || {}), aiProfile: liveAiProfile };
+  const contact = mergedUser?.aiProfile?.contact || {};
+  const profile = mergedUser?.aiProfile || {};
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await api.get('/profile');
+        if (response?.data?.success) {
+          const serverUser = response.data.data.user;
+          setUser(serverUser);
+          setUserProfile(serverUser);
+          setPhotoError(false);
+        }
+      } catch (error) {
+        console.error('Failed to load profile', error);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
   const education = profile.education || [];
   const experience = profile.experience || [];
   const projects = profile.projects || [];
@@ -101,9 +128,10 @@ const ProfilePage = () => {
   const skills = profile.skills || [];
 
   const handlePhotoChange = async (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
     if (!file) return;
     setSelectedFileName(file.name);
+    setPhotoStatus('uploading');
     try {
       const formData = new FormData();
       formData.append('photo', file);
@@ -112,17 +140,30 @@ const ProfilePage = () => {
       const updatedUser = res.data.data.user;
       updateStoredUserProfile(updatedUser);
       setUser(updatedUser);
+      setPhotoError(false);
+      setPhotoStatus('uploaded');
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.error?.message || err?.message || 'Photo upload failed';
       alert(msg);
+      setPhotoStatus('error');
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const uploadBase = apiUrl.replace(/\/api\/?$/, '');
-  const photoUrl = user?.photoUrl ? (user.photoUrl.startsWith('/uploads') ? `${uploadBase}${encodeURI(user.photoUrl)}` : encodeURI(user.photoUrl)) : null;
-  const resumeUrl = profile?.resume?.filePath ? `${uploadBase}/uploads/${profile.resume.filePath.split('/').pop()}` : null;
+  const photoUrl = mergedUser?.photoUrl || null;
+  const resumeUrl = profile?.resume?.filePath ? new URL(`/uploads/${profile.resume.filePath.split('/').pop()}`, uploadBase).href : null;
+
+  useEffect(() => {
+    if (photoUrl) {
+      setPhotoError(false);
+    }
+  }, [photoUrl]);
 
   return (
     <div className='rounded-3xl bg-white p-8 shadow-xl'>
@@ -130,12 +171,17 @@ const ProfilePage = () => {
       <div className='mt-6 grid gap-6 sm:grid-cols-2'>
         <div className='rounded-3xl bg-slate-50 p-6'>
           <p className='text-sm text-slate-500'>Name</p>
-          <p className='mt-3 text-xl font-semibold text-slate-900'>{user?.name || 'Student'}</p>
+          <p className='mt-3 text-xl font-semibold text-slate-900'>{mergedUser?.name || 'Student'}</p>
           <div className='mt-4'>
             <label className='text-sm text-slate-500 block'>Profile photo</label>
             <div className='mt-2 flex items-center gap-4'>
-              {photoUrl ? (
-                <img src={photoUrl} alt='Profile' className='h-20 w-20 rounded-full object-cover' />
+              {photoUrl && !photoError ? (
+                <img
+                  onError={() => setPhotoError(true)}
+                  src={photoUrl}
+                  alt='Profile'
+                  className='h-20 w-20 rounded-full object-cover'
+                />
               ) : (
                 <div className='h-20 w-20 rounded-full bg-slate-200' />
               )}
@@ -155,7 +201,15 @@ const ProfilePage = () => {
                   onChange={handlePhotoChange}
                 />
                 <p className='text-xs text-slate-500'>
-                  {photoUrl ? 'Photo uploaded successfully' : (selectedFileName || 'No photo selected')}
+                  {photoStatus === 'uploading'
+                    ? 'Uploading photo...'
+                    : photoStatus === 'uploaded'
+                      ? 'Photo uploaded successfully'
+                      : photoUrl && !photoError
+                        ? 'Photo uploaded successfully'
+                        : selectedFileName
+                          ? `Selected: ${selectedFileName}`
+                          : 'No photo selected'}
                 </p>
               </div>
             </div>
@@ -163,7 +217,7 @@ const ProfilePage = () => {
         </div>
         <div className='rounded-3xl bg-slate-50 p-6'>
           <p className='text-sm text-slate-500'>Email</p>
-          <p className='mt-3 text-xl font-semibold text-slate-900'>{contact.email || user?.email || 'n/a'}</p>
+          <p className='mt-3 text-xl font-semibold text-slate-900'>{contact.email || mergedUser?.email || 'n/a'}</p>
         </div>
       </div>
       {resumeUrl && (
@@ -179,7 +233,7 @@ const ProfilePage = () => {
         </div>
         <div className='rounded-3xl bg-slate-50 p-6'>
           <p className='text-sm text-slate-500'>Target Career Goal</p>
-          <p className='mt-3 text-xl font-semibold text-slate-900'>{user?.careerGoal || 'Software Engineer'}</p>
+          <p className='mt-3 text-xl font-semibold text-slate-900'>{mergedUser?.careerGoal || 'Software Engineer'}</p>
         </div>
       </div>
 

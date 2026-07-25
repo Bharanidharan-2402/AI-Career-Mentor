@@ -16,6 +16,7 @@ import interviewRoutes from './routes/interview.js';
 import chatRoutes from './routes/chat.js';
 import progressRoutes from './routes/progress.js';
 import profileRoutes from './routes/profile.js';
+import { serverRoot } from './utils/serverPaths.js';
 
 const app = express();
 
@@ -29,7 +30,9 @@ const allowedOrigins = [
   .flatMap((value) => value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [])
   .filter((value, index, values) => values.indexOf(value) === index);
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -51,7 +54,6 @@ const __dirname = path.dirname(__filename);
 const clientBuildPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
 
 // serve uploaded files publicly
-import { serverRoot } from './utils/serverPaths.js';
 app.use('/uploads', express.static(path.resolve(serverRoot, 'uploads')));
 
 app.use('/api/auth', authRoutes);

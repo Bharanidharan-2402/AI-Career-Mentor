@@ -1,19 +1,25 @@
+import { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/apiClient.js';
-import { setToken, setUserProfile } from '../utils/auth.js';
+import { AuthContext } from '../contexts/AuthContext.jsx';
 
 const handleGoogleSignIn = () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    alert('Google Sign-In is not configured. Please add VITE_GOOGLE_CLIENT_ID to your .env file.');
+    return;
+  }
   const redirectUri = `${window.location.origin}/auth/google/callback`;
   const scope = 'openid email profile';
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId || '')}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
   window.location.href = authUrl;
 };
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit } = useForm();
+  const { login } = useContext(AuthContext);
+  const { register, handleSubmit, formState: { isSubmitting } } = useForm();
 
   const onSubmit = async (data) => {
     try {
@@ -22,8 +28,7 @@ const RegisterPage = () => {
         careerGoal: data.careerGoal || 'Software Engineer'
       });
       const { token, user } = response.data.data;
-      setToken(token);
-      setUserProfile(user);
+      login(user, token);
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
@@ -48,10 +53,14 @@ const RegisterPage = () => {
           <span className='text-slate-700'>Password</span>
           <input type='password' {...register('password')} className='mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3' required />
         </label>
-        <button type='submit' className='w-full rounded-2xl bg-brand px-4 py-3 text-white'>Register</button>
+        <button type='submit' disabled={isSubmitting} className='w-full rounded-2xl bg-brand px-4 py-3 text-white disabled:opacity-60'>
+          {isSubmitting ? 'Creating account…' : 'Register'}
+        </button>
       </form>
       <div className='mt-4'>
-        <button type='button' onClick={handleGoogleSignIn} className='w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-700'>Continue with Google</button>
+        <button type='button' onClick={handleGoogleSignIn} className='w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-700'>
+          Continue with Google
+        </button>
       </div>
       <p className='mt-6 text-center text-slate-500'>Already registered? <Link to='/login' className='text-brand font-semibold'>Login</Link></p>
     </div>

@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/apiClient.js';
-import { setToken, setUserProfile } from '../utils/auth.js';
+import { AuthContext } from '../contexts/AuthContext.jsx';
 
 const GoogleCallbackPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
   const [message, setMessage] = useState('Finishing sign-in...');
 
   useEffect(() => {
@@ -30,18 +31,18 @@ const GoogleCallbackPage = () => {
         const redirectUri = `${window.location.origin}/auth/google/callback`;
         const response = await api.post('/auth/google', { code, redirectUri });
         const { token, user } = response.data.data;
-        setToken(token);
-        setUserProfile(user);
+        login(user, token);
         navigate('/dashboard');
       } catch (err) {
         console.error(err);
-        setMessage('Google sign-in could not be completed. Please try again.');
+        const msg = err?.response?.data?.error?.message || 'Google sign-in could not be completed.';
+        setMessage(`${msg} Redirecting to login…`);
         window.setTimeout(() => navigate('/login'), 2000);
       }
     };
 
     finishGoogleAuth();
-  }, [location.search, navigate]);
+  }, [location.search, navigate, login]);
 
   return (
     <div className='mx-auto max-w-md rounded-3xl bg-white p-8 shadow-xl text-center'>
