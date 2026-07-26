@@ -88,7 +88,7 @@ const renderSkills = (skills = []) => (
 );
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(() => getUserProfile());
+  const [user, setUser] = useState(() => getUserProfile() || null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [photoStatus, setPhotoStatus] = useState('idle');
   const [photoError, setPhotoError] = useState(false);

@@ -9,12 +9,15 @@ export const ResumeContext = createContext();
  * automatically pick up the fresh data without a page reload.
  */
 export const ResumeProvider = ({ children }) => {
-  const { user, updateUser } = useContext(AuthContext);
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+  const updateUser = authContext?.updateUser;
 
   // Derive the profile from auth context so it's always in sync
   const aiProfile = user?.aiProfile || {};
 
   const setResumeProfile = useCallback((analysis) => {
+    if (!updateUser) return;
     // Push into auth context which persists to localStorage
     updateUser({
       aiProfile: analysis,
