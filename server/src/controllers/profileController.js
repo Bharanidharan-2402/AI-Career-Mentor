@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import User from '../models/User.js';
-import { serverRoot } from '../utils/serverPaths.js';
 
 export const uploadPhoto = async (req, res, next) => {
   try {
@@ -11,7 +10,8 @@ export const uploadPhoto = async (req, res, next) => {
     }
 
     const storedPath = path.join('uploads', req.file.filename);
-    const publicUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const publicBaseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const publicUrl = `${publicBaseUrl.replace(/\/$/, '')}/uploads/${req.file.filename}`;
 
     const user = await User.findByIdAndUpdate(userId, { photoUrl: publicUrl }, { new: true });
 
