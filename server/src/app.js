@@ -29,7 +29,9 @@ const allowedOrigins = [
   .flatMap((value) => value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [])
   .filter((value, index, values) => values.indexOf(value) === index);
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -52,7 +54,11 @@ const clientBuildPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
 
 // serve uploaded files publicly
 import { serverRoot } from './utils/serverPaths.js';
-app.use('/uploads', express.static(path.resolve(serverRoot, 'uploads')));
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.resolve(serverRoot, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
