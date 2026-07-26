@@ -10,8 +10,10 @@ export const uploadPhoto = async (req, res, next) => {
       return res.status(400).json({ success: false, error: { message: 'Photo file is required' } });
     }
 
+    const storedPath = path.join('uploads', req.file.filename);
     const publicUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    const user = await User.findByIdAndUpdate(userId, { photoUrl: publicUrl }, { new: true }).select('-password');
+
+    const user = await User.findByIdAndUpdate(userId, { photoUrl: publicUrl }, { new: true });
 
     res.json({ success: true, data: { user } });
   } catch (error) {

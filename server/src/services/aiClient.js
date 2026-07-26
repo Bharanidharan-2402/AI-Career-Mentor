@@ -43,6 +43,21 @@ const loadPrompt = async (promptFile) => {
   return fs.promises.readFile(existingPath, 'utf-8');
 };
 
+const getUserFriendlyErrorMessage = (error) => {
+  const message = error?.message || '';
+  const status = error?.status;
+
+  if (status === 429 || /429|quota|rate limit|too many requests|exceeded your current quota/i.test(message)) {
+    return 'Gemini API quota has been exceeded. Please wait a bit and try again later, or upgrade your plan.';
+  }
+
+  if (status === 401 || /api key|authentication|unauthorized/i.test(message)) {
+    return 'Gemini API key is invalid or unauthorized. Please check your server configuration.';
+  }
+
+  return 'AI service unavailable. Please try again later.';
+};
+
 const generateAIResponse = async (prompt, userInput) => {
   if (!model) {
     logger.warn('AI service is not initialized. Returning fallback text.');
@@ -56,8 +71,8 @@ const generateAIResponse = async (prompt, userInput) => {
     const response = result.response;
     return response.text();
   } catch (error) {
-    logger.error('Gemini generateContent failed', { error: error.message });
-    return 'AI service unavailable. Please try again later.';
+    logger.error('Gemini generateContent failed', { status: error?.status, error: error.message });
+    return getUserFriendlyErrorMessage(error);
   }
 };
 

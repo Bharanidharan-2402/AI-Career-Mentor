@@ -29,14 +29,45 @@ const skillGapAgent = async (profile, targetRole) => {
 
   const parsed = tryParseJson(aiRaw);
   if (parsed && typeof parsed === 'object') {
+    // Normalize matchedSkills
+    const matchedSkills = Array.isArray(parsed.matchedSkills)
+      ? parsed.matchedSkills.map((s) => {
+          if (typeof s === 'string') return { name: s, relevance: 'Medium' };
+          return { name: s.name || String(s), relevance: s.relevance || 'Medium' };
+        })
+      : [];
+
+    // Normalize missingSkills — support both flat strings and rich objects
+    const missingSkills = Array.isArray(parsed.missingSkills)
+      ? parsed.missingSkills.map((s) => {
+          if (typeof s === 'string') {
+            return { name: s, category: 'General', demandLevel: 'Medium', reason: '' };
+          }
+          return {
+            name: s.name || String(s),
+            category: s.category || 'General',
+            demandLevel: s.demandLevel || s.demand_level || 'Medium',
+            reason: s.reason || s.why || ''
+          };
+        })
+      : [];
+
     return {
-      missingSkills: Array.isArray(parsed.missingSkills) ? parsed.missingSkills : [],
-      priorityRecommendations: Array.isArray(parsed.priorityRecommendations) ? parsed.priorityRecommendations : []
+      matchedSkills,
+      missingSkills,
+      priorityRecommendations: Array.isArray(parsed.priorityRecommendations)
+        ? parsed.priorityRecommendations
+        : []
     };
   }
 
   return {
-    missingSkills: ['Core technical fundamentals', 'Practical project experience', 'Role-specific tools'],
+    matchedSkills: [],
+    missingSkills: [
+      { name: 'Core technical fundamentals', category: 'General', demandLevel: 'High', reason: 'Foundation for all technical roles' },
+      { name: 'Practical project experience', category: 'General', demandLevel: 'High', reason: 'Demonstrates hands-on ability to build' },
+      { name: 'Role-specific tools', category: 'General', demandLevel: 'Medium', reason: 'Industry-standard tooling expected by employers' }
+    ],
     priorityRecommendations: [
       'Build a project using the core tech stack',
       'Study interview patterns for your target role',

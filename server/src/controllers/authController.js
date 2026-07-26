@@ -18,14 +18,13 @@ const createToken = (user) => {
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, careerGoal } = registerSchema.parse(req.body);
-    const normalizedEmail = email.trim().toLowerCase();
-    const existing = await User.findOne({ email: normalizedEmail });
+    const existing = await User.findOne({ email });
     if (existing) {
       return res.status(409).json({ success: false, error: { message: 'Email already registered' } });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email: normalizedEmail, password: hashedPassword, careerGoal });
+    const user = await User.create({ name, email, password: hashedPassword, careerGoal });
     const token = createToken(user);
 
     res.status(201).json({
@@ -51,19 +50,12 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });
     }
 
-    let validPassword = false;
-    try {
-      validPassword = await bcrypt.compare(password, user.password);
-    } catch (compareError) {
-      return res.status(500).json({ success: false, error: { message: 'Unable to verify password' } });
-    }
-
+    const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });
     }
@@ -132,26 +124,16 @@ export const googleAuth = async (req, res, next) => {
 };
 
 export const me = async (req, res) => {
-  const user = req.user;
-  if (!user) {
-    return res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
-  }
+  const user = req.user || {};
   res.json({
     success: true,
     data: {
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        careerGoal: user.careerGoal,
-        role: user.role,
-        authProvider: user.authProvider,
+        ...user,
         photoUrl: user.photoUrl || null,
         aiProfile: user.aiProfile || {},
-        resumeUploadedAt: user.resumeUploadedAt || null,
-        createdAt: user.createdAt
+        resumeUploadedAt: user.resumeUploadedAt
       }
     }
   });
 };
-
