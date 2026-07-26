@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
 
-export const ResumeContext = createContext();
+export const ResumeContext = createContext({
+  aiProfile: {},
+  setResumeProfile: () => {}
+});
 
 /**
  * Provides the latest AI-parsed resume profile to all modules.

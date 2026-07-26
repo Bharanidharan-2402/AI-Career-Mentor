@@ -392,8 +392,8 @@ const SkillAnalysisPage = () => {
   const [learningPlans, setLearningPlans] = useState([]);
   const [plansLoading, setPlansLoading] = useState(true);
   const [lastTargetRole, setLastTargetRole] = useState('');
-  const { aiProfile } = useResume();
-  const user = getUserProfile();
+  const { aiProfile = {} } = useResume();
+  const user = getUserProfile() || null;
   const { register, handleSubmit } = useForm({
     defaultValues: { targetRole: user?.careerGoal || aiProfile?.targetRole || 'Software Engineer' }
   });

@@ -46,8 +46,8 @@ const difficultyColors = {
 const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { aiProfile } = useResume();
-  const user = getUserProfile();
+  const { aiProfile = {} } = useResume();
+  const user = getUserProfile() || null;
   const { register, handleSubmit } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer', skillLevel: 'Intermediate' } });
 
   const loadProjects = async (data) => {

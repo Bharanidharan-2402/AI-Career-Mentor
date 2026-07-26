@@ -232,8 +232,8 @@ const RoadmapPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadingActive, setLoadingActive] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { aiProfile } = useResume();
-  const user = getUserProfile();
+  const { aiProfile = {} } = useResume();
+  const user = getUserProfile() || null;
   const focusSkillParam = searchParams.get('focusSkill');
   const { register, handleSubmit, setValue } = useForm({ defaultValues: { targetRole: user?.careerGoal || 'Software Engineer' } });
 
@@ -359,7 +359,7 @@ const RoadmapPage = () => {
         {aiProfile?.skills?.length > 0 && (
           <div className='mt-4 rounded-xl glass-accent px-4 py-3'>
             <p className='text-sm text-accent-light'>
-              🎯 Roadmap personalized using your resume — <strong>{aiProfile.skills.length}</strong> skills analyzed
+              🎯 Roadmap personalized using your resume — <strong>{aiProfile?.skills?.length || 0}</strong> skills analyzed
             </p>
           </div>
         )}

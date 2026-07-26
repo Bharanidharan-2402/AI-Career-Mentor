@@ -3,8 +3,14 @@ export const getToken = () => window.localStorage.getItem('mentor_token');
 export const removeToken = () => window.localStorage.removeItem('mentor_token');
 
 export const getUserProfile = () => {
+  if (typeof window === 'undefined') return null;
   const profile = window.localStorage.getItem('mentor_user');
-  return profile ? JSON.parse(profile) : null;
+  if (!profile) return null;
+  try {
+    return JSON.parse(profile);
+  } catch {
+    return null;
+  }
 };
 
 export const setUserProfile = (user) => window.localStorage.setItem('mentor_user', JSON.stringify(user));

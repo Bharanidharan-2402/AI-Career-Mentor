@@ -63,7 +63,7 @@ const InterviewPage = () => {
     if (didAutoLoad.current) return;
     if (user?.aiProfile?.skills?.length || user?.aiProfile?.summary) {
       didAutoLoad.current = true;
-      loadQuestions({ targetRole: user.careerGoal || 'Software Engineer', interviewType: 'Technical' });
+      loadQuestions({ targetRole: user?.careerGoal || 'Software Engineer', interviewType: 'Technical' });
     }
   }, [user?.aiProfile?.skills?.length, user?.aiProfile?.summary, user?.careerGoal]);
 

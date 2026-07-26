@@ -9,8 +9,8 @@ const DashboardPage = () => {
   const [progress, setProgress] = useState(null);
   const [overview, setOverview] = useState({ score: 0, gaps: 0, projects: 0 });
   const { user: authUser } = useContext(AuthContext);
-  const { aiProfile } = useResume();
-  const user = authUser || getUserProfile();
+  const { aiProfile = {} } = useResume();
+  const user = authUser || getUserProfile() || null;
 
   useEffect(() => {
     const load = async () => {
@@ -57,7 +57,7 @@ const DashboardPage = () => {
         {aiProfile?.skills?.length > 0 && (
           <div className='mt-4 rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3'>
             <p className='text-sm text-indigo-700'>
-              ✅ Resume analyzed — <strong>{aiProfile.skills.length}</strong> skills detected. All modules personalized.
+              ✅ Resume analyzed — <strong>{aiProfile?.skills?.length || 0}</strong> skills detected. All modules personalized.
             </p>
           </div>
         )}
