@@ -184,7 +184,7 @@ const ProfilePage = () => {
                   className='rounded-2xl bg-brand px-4 py-2 text-white hover:bg-brand-dark'
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Choose photo
+                  {photoUrl && !photoError ? 'Update profile' : 'Upload photo'}
                 </button>
                 <input
                   ref={fileInputRef}
